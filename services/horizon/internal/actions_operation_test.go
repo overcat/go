@@ -324,7 +324,6 @@ func TestOperationEffect_BumpSequence(t *testing.T) {
 		ht.Assert.Equal(int64(300000000000), result[0].NewSeq)
 	}
 }
-
 func TestOperation_IncludeTransaction(t *testing.T) {
 	ht := StartHTTPTest(t, "kahuna")
 	defer ht.Finish()
