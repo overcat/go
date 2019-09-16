@@ -10,12 +10,20 @@ import (
 
 	"github.com/go-chi/chi"
 
+	"github.com/stellar/go/protocols/horizon"
 	horizonContext "github.com/stellar/go/services/horizon/internal/context"
 	"github.com/stellar/go/services/horizon/internal/ledger"
 	"github.com/stellar/go/services/horizon/internal/test"
 	"github.com/stellar/go/services/horizon/internal/toid"
 	"github.com/stellar/go/support/render/problem"
 	"github.com/stellar/go/xdr"
+)
+
+var (
+	assetIssuer = "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H"
+	native      = xdr.MustNewNativeAsset()
+	usd         = xdr.MustNewCreditAsset("USD", assetIssuer)
+	spoon       = xdr.MustNewCreditAsset("SPOOON", assetIssuer)
 )
 
 func TestGetAccountID(t *testing.T) {
@@ -459,15 +467,19 @@ func TestParams(t *testing.T) {
 
 	type QueryParams struct {
 		Account xdr.AccountId `name:"4_asset_issuer"`
+		Native  xdr.Asset     `prefix:"native_"`
+		USD     xdr.Asset     `prefix:"4_"`
+		Spoon   xdr.Asset     `prefix:"long_4_"`
 	}
 
 	qp := QueryParams{}
 	err := GetParams(&qp, action.R)
 	tt.Assert.NoError(err)
-	tt.Assert.Equal(
-		"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H",
-		qp.Account.Address(),
-	)
+
+	tt.Assert.Equal(assetIssuer, qp.Account.Address())
+	tt.Assert.Equal(native, qp.Native)
+	tt.Assert.Equal(usd, qp.USD)
+	tt.Assert.Equal(spoon, qp.Spoon)
 }
 
 func makeTestAction() *Base {
@@ -501,18 +513,23 @@ func testURLParams() map[string]string {
 		"32max":                fmt.Sprint(math.MaxInt32),
 		"64min":                fmt.Sprint(math.MinInt64),
 		"64max":                fmt.Sprint(math.MaxInt64),
-		"native_asset_type":    "native",
-		"4_asset_type":         "credit_alphanum4",
-		"4_asset_code":         "USD",
-		"4_asset_issuer":       "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H",
+		"native_asset_type":    assetMeta(native).Type,
+		"4_asset_type":         assetMeta(usd).Type,
+		"4_asset_code":         assetMeta(usd).Code,
+		"4_asset_issuer":       assetMeta(usd).Issuer,
 		"12_asset_type":        "credit_alphanum12",
 		"12_asset_code":        "USD",
 		"12_asset_issuer":      "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H",
-		"long_4_asset_type":    "credit_alphanum4",
-		"long_4_asset_code":    "SPOOON",
-		"long_4_asset_issuer":  "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H",
+		"long_4_asset_type":    assetMeta(spoon).Type,
+		"long_4_asset_code":    assetMeta(spoon).Code,
+		"long_4_asset_issuer":  assetMeta(spoon).Issuer,
 		"long_12_asset_type":   "credit_alphanum12",
 		"long_12_asset_code":   "OHMYGODITSSOLONG",
 		"long_12_asset_issuer": "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H",
 	}
+}
+
+func assetMeta(asset xdr.Asset) (result horizon.Asset) {
+	asset.Extract(&result.Type, &result.Code, &result.Issuer)
+	return
 }

@@ -650,9 +650,9 @@ func GetParams(params interface{}, r *http.Request) error {
 	for i := 0; i < v.NumField(); i++ {
 		field := v.Field(i)
 
-		switch {
-		case field.Type() == reflect.TypeOf(xdr.AccountId{}):
-			name := qt.Field(0).Tag.Get("name")
+		switch field.Type() {
+		case reflect.TypeOf(xdr.AccountId{}):
+			name := qt.Field(i).Tag.Get("name")
 			account, err := GetAccountID(r, name)
 			if err != nil {
 				return err
@@ -660,6 +660,21 @@ func GetParams(params interface{}, r *http.Request) error {
 
 			field := v.Field(i)
 			field.Set(reflect.ValueOf(account))
+		case reflect.TypeOf(xdr.Asset{}):
+			prefix := qt.Field(i).Tag.Get("prefix")
+
+			// TODO: Add validation, prefix should be present for xdr.Asset
+			// params
+			if len(prefix) == 0 {
+				continue
+			}
+			// TODO: validate prefix is present
+			asset, found := MaybeGetAsset(r, prefix)
+
+			if found {
+				field := v.Field(i)
+				field.Set(reflect.ValueOf(asset))
+			}
 		}
 	}
 
