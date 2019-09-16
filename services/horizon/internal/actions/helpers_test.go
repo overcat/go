@@ -12,6 +12,7 @@ import (
 
 	"github.com/stellar/go/protocols/horizon"
 	horizonContext "github.com/stellar/go/services/horizon/internal/context"
+	"github.com/stellar/go/services/horizon/internal/db2"
 	"github.com/stellar/go/services/horizon/internal/ledger"
 	"github.com/stellar/go/services/horizon/internal/test"
 	"github.com/stellar/go/services/horizon/internal/toid"
@@ -466,15 +467,19 @@ func TestParams(t *testing.T) {
 	action := makeTestAction()
 
 	type QueryParams struct {
-		Account xdr.AccountId `name:"4_asset_issuer"`
-		Native  xdr.Asset     `prefix:"native_"`
-		USD     xdr.Asset     `prefix:"4_"`
-		Spoon   xdr.Asset     `prefix:"long_4_"`
+		PageQuery db2.PageQuery
+		Account   xdr.AccountId `name:"4_asset_issuer"`
+		Native    xdr.Asset     `prefix:"native_"`
+		USD       xdr.Asset     `prefix:"4_"`
+		Spoon     xdr.Asset     `prefix:"long_4_"`
 	}
 
 	qp := QueryParams{}
 	err := GetParams(&qp, action.R)
 	tt.Assert.NoError(err)
+
+	tt.Assert.Equal("123456", qp.PageQuery.Cursor)
+	tt.Assert.Equal(uint64(2), qp.PageQuery.Limit)
 
 	tt.Assert.Equal(assetIssuer, qp.Account.Address())
 	tt.Assert.Equal(native, qp.Native)

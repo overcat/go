@@ -651,6 +651,13 @@ func GetParams(params interface{}, r *http.Request) error {
 		field := v.Field(i)
 
 		switch field.Type() {
+		case reflect.TypeOf(db2.PageQuery{}):
+			pq, err := GetPageQuery(r)
+			if err != nil {
+				return err
+			}
+			field := v.Field(i)
+			field.Set(reflect.ValueOf(pq))
 		case reflect.TypeOf(xdr.AccountId{}):
 			name := qt.Field(i).Tag.Get("name")
 			account, err := GetAccountID(r, name)
@@ -668,7 +675,7 @@ func GetParams(params interface{}, r *http.Request) error {
 			if len(prefix) == 0 {
 				continue
 			}
-			// TODO: validate prefix is present
+
 			asset, found := MaybeGetAsset(r, prefix)
 
 			if found {
