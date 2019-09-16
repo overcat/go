@@ -452,6 +452,24 @@ func TestFullURL(t *testing.T) {
 	tt.Assert.Equal("http:///foo-bar/blah?limit=2&cursor=123456", url.String())
 }
 
+func TestParams(t *testing.T) {
+	tt := test.Start(t)
+	defer tt.Finish()
+	action := makeTestAction()
+
+	type QueryParams struct {
+		Account xdr.AccountId `name:"4_asset_issuer"`
+	}
+
+	qp := QueryParams{}
+	err := GetParams(&qp, action.R)
+	tt.Assert.NoError(err)
+	tt.Assert.Equal(
+		"GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H",
+		qp.Account.Address(),
+	)
+}
+
 func makeTestAction() *Base {
 	return makeAction("/foo-bar/blah?limit=2&cursor=123456", testURLParams())
 }

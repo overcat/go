@@ -6,6 +6,7 @@ import (
 	"mime"
 	"net/http"
 	"net/url"
+	"reflect"
 	"strconv"
 	"unicode/utf8"
 
@@ -639,4 +640,28 @@ func FullURL(ctx context.Context) *url.URL {
 		url.RawQuery = r.URL.RawQuery
 	}
 	return url
+}
+
+// GetParams Reads and validates query parameters into a given struct
+func GetParams(params interface{}, r *http.Request) error {
+	v := reflect.ValueOf(params).Elem()
+	qt := v.Type()
+
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+
+		switch {
+		case field.Type() == reflect.TypeOf(xdr.AccountId{}):
+			name := qt.Field(0).Tag.Get("name")
+			account, err := GetAccountID(r, name)
+			if err != nil {
+				return err
+			}
+
+			field := v.Field(i)
+			field.Set(reflect.ValueOf(account))
+		}
+	}
+
+	return nil
 }
