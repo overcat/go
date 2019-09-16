@@ -660,6 +660,16 @@ func GetParams(params interface{}, r *http.Request) error {
 			field.Set(reflect.ValueOf(pq))
 		case reflect.TypeOf(xdr.AccountId{}):
 			name := qt.Field(i).Tag.Get("name")
+
+			s, err := GetString(r, name)
+			if err != nil {
+				return err
+			}
+			if s == "" {
+				// TODO return error if field is required
+				continue
+			}
+
 			account, err := GetAccountID(r, name)
 			if err != nil {
 				return err

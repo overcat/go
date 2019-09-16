@@ -461,10 +461,9 @@ func TestFullURL(t *testing.T) {
 	tt.Assert.Equal("http:///foo-bar/blah?limit=2&cursor=123456", url.String())
 }
 
-func TestParams(t *testing.T) {
+func TestPGetParams(t *testing.T) {
 	tt := test.Start(t)
 	defer tt.Finish()
-	action := makeTestAction()
 
 	type QueryParams struct {
 		PageQuery db2.PageQuery
@@ -474,17 +473,33 @@ func TestParams(t *testing.T) {
 		Spoon     xdr.Asset     `prefix:"long_4_"`
 	}
 
-	qp := QueryParams{}
-	err := GetParams(&qp, action.R)
-	tt.Assert.NoError(err)
+	t.Run("valid query params", func(t *testing.T) {
+		r := makeTestAction().R
 
-	tt.Assert.Equal("123456", qp.PageQuery.Cursor)
-	tt.Assert.Equal(uint64(2), qp.PageQuery.Limit)
+		qp := QueryParams{}
+		err := GetParams(&qp, r)
+		tt.Assert.NoError(err)
 
-	tt.Assert.Equal(assetIssuer, qp.Account.Address())
-	tt.Assert.Equal(native, qp.Native)
-	tt.Assert.Equal(usd, qp.USD)
-	tt.Assert.Equal(spoon, qp.Spoon)
+		tt.Assert.Equal("123456", qp.PageQuery.Cursor)
+		tt.Assert.Equal(uint64(2), qp.PageQuery.Limit)
+
+		tt.Assert.Equal(assetIssuer, qp.Account.Address())
+		tt.Assert.Equal(native, qp.Native)
+		tt.Assert.Equal(usd, qp.USD)
+		tt.Assert.Equal(spoon, qp.Spoon)
+	})
+
+	t.Run("missing query params", func(t *testing.T) {
+		r := makeAction("/", nil).R
+
+		qp := QueryParams{}
+		err := GetParams(&qp, r)
+		tt.Assert.NoError(err)
+
+		tt.Assert.Equal("", qp.PageQuery.Cursor)
+		tt.Assert.Equal(uint64(10), qp.PageQuery.Limit)
+		tt.Assert.Equal("asc", qp.PageQuery.Order)
+	})
 }
 
 func makeTestAction() *Base {
