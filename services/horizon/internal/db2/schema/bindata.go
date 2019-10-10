@@ -306,7 +306,7 @@ func migrations1_initial_schemaSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/1_initial_schema.sql", size: 9977, mode: os.FileMode(0644), modTime: time.Unix(1570634335, 0)}
+	info := bindataFileInfo{name: "migrations/1_initial_schema.sql", size: 9977, mode: os.FileMode(0644), modTime: time.Unix(1570634484, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x6d, 0xdd, 0xc3, 0x1d, 0x39, 0xb7, 0x5e, 0x6a, 0x64, 0x2b, 0xd5, 0x66, 0x83, 0x61, 0x79, 0xf7, 0x59, 0xce, 0x51, 0x66, 0x3c, 0xd0, 0xf3, 0x14, 0x35, 0xcd, 0x21, 0xc0, 0xae, 0x24, 0x84, 0x35}}
 	return a, nil
 }
@@ -366,7 +366,7 @@ func migrations22_trust_linesSql() (*asset, error) {
 		return nil, err
 	}
 
-	info := bindataFileInfo{name: "migrations/22_trust_lines.sql", size: 915, mode: os.FileMode(0644), modTime: time.Unix(1570634322, 0)}
+	info := bindataFileInfo{name: "migrations/22_trust_lines.sql", size: 915, mode: os.FileMode(0644), modTime: time.Unix(1570741040, 0)}
 	a := &asset{bytes: bytes, info: info, digest: [32]uint8{0x13, 0xe7, 0xde, 0x7f, 0xcc, 0x69, 0x3f, 0x5c, 0x91, 0x61, 0x51, 0x9e, 0x5b, 0xfa, 0xdd, 0x90, 0x97, 0x35, 0x28, 0xf8, 0x88, 0x8c, 0x63, 0x6, 0x81, 0x63, 0x2e, 0x70, 0x41, 0x54, 0xba, 0xf8}}
 	return a, nil
 }
