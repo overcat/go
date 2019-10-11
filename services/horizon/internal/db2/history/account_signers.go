@@ -2,8 +2,10 @@ package history
 
 import (
 	sq "github.com/Masterminds/squirrel"
+
 	"github.com/stellar/go/services/horizon/internal/db2"
 	"github.com/stellar/go/support/errors"
+	"github.com/stellar/go/xdr"
 )
 
 func (q *Q) SignersForAccounts(accounts []string) ([]AccountSigner, error) {
@@ -62,6 +64,37 @@ func (q *Q) RemoveAccountSigner(account, signer string) (int64, error) {
 	}
 
 	return result.RowsAffected()
+}
+
+// AccountSignersForAsset returns a list of `AccountSigner` rows who are trustee to an
+// asset Using this type for now, we should probably change the type on this
+// end-point to be consistent with what the end-point is supposed to be
+// returning.
+func (q *Q) AccountSignersForAsset(asset xdr.Asset, page db2.PageQuery) ([]AccountSigner, error) {
+	var assetType, code, issuer string
+	asset.MustExtract(&assetType, &code, &issuer)
+
+	sql := sq.
+		Select("accounts_signers.*").
+		From("accounts_signers").
+		Join("trust_lines ON accounts_signers.account = trust_lines.accountid").
+		Where(map[string]interface{}{
+			"trust_lines.assettype":   int32(asset.Type),
+			"trust_lines.assetissuer": issuer,
+			"trust_lines.assetcode":   code,
+		})
+
+	sql, err := page.ApplyToUsingCursor(sql, "trust_lines.accountid", page.Cursor)
+	if err != nil {
+		return nil, errors.Wrap(err, "could not apply query to page")
+	}
+
+	var results []AccountSigner
+	if err := q.Select(&results, sql); err != nil {
+		return nil, errors.Wrap(err, "could not run select query")
+	}
+
+	return results, nil
 }
 
 var selectAccountSigners = sq.Select("accounts_signers.*").From("accounts_signers")
