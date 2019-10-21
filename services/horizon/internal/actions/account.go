@@ -75,12 +75,11 @@ func (handler GetAccountsHandler) GetResourcePage(
 		return nil, err
 	}
 
-	var records []history.AccountSigner
-
 	rawSigner, err := GetString(r, "signer")
 	if err != nil {
 		return nil, err
 	}
+	var accounts []hal.Pageable
 
 	if len(rawSigner) == 0 {
 		asset, err := GetAsset(r, "")
@@ -88,26 +87,36 @@ func (handler GetAccountsHandler) GetResourcePage(
 			return nil, err
 		}
 
-		records, err = handler.HistoryQ.AccountSignersForAsset(asset, pq)
+		records, err := handler.HistoryQ.AccountsForAsset(asset, pq)
 		if err != nil {
 			return nil, errors.Wrap(err, "loading account records")
+		}
+
+		for _, record := range records {
+			var res protocol.Account
+			data := []history.Data{}
+			signers := []history.AccountSigner{}
+			trustlines := []history.TrustLine{}
+
+			resourceadapter.PopulateAccountEntry(ctx, &res, record, data, signers, trustlines)
+
+			accounts = append(accounts, res)
 		}
 	} else {
 		signer, err := GetAccountID(r, "signer")
 		if err != nil {
 			return nil, err
 		}
-		records, err = handler.HistoryQ.AccountsForSigner(signer.Address(), pq)
+		records, err := handler.HistoryQ.AccountsForSigner(signer.Address(), pq)
 		if err != nil {
 			return nil, errors.Wrap(err, "loading account records")
 		}
-	}
 
-	var accounts []hal.Pageable
-	for _, record := range records {
-		var res protocol.AccountSigner
-		resourceadapter.PopulateAccountSigner(ctx, &res, record)
-		accounts = append(accounts, res)
+		for _, record := range records {
+			var res protocol.AccountSigner
+			resourceadapter.PopulateAccountSigner(ctx, &res, record)
+			accounts = append(accounts, res)
+		}
 	}
 
 	return accounts, nil

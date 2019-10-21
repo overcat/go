@@ -22,6 +22,43 @@ var (
 	usd             = xdr.MustNewCreditAsset("USD", trustLineIssuer)
 	euro            = xdr.MustNewCreditAsset("EUR", trustLineIssuer)
 
+	account1 = xdr.AccountEntry{
+		AccountId:     xdr.MustAddress(accountOne),
+		Balance:       20000,
+		SeqNum:        223456789,
+		NumSubEntries: 10,
+		Flags:         1,
+		HomeDomain:    "stellar.org",
+		Thresholds:    xdr.Thresholds{1, 2, 3, 4},
+		Ext: xdr.AccountEntryExt{
+			V: 1,
+			V1: &xdr.AccountEntryV1{
+				Liabilities: xdr.Liabilities{
+					Buying:  3,
+					Selling: 4,
+				},
+			},
+		},
+	}
+
+	account2 = xdr.AccountEntry{
+		AccountId:     xdr.MustAddress(accountTwo),
+		Balance:       50000,
+		SeqNum:        648736,
+		NumSubEntries: 10,
+		Flags:         2,
+		HomeDomain:    "meridian.stellar.org",
+		Thresholds:    xdr.Thresholds{5, 6, 7, 8},
+		Ext: xdr.AccountEntryExt{
+			V: 1,
+			V1: &xdr.AccountEntryV1{
+				Liabilities: xdr.Liabilities{
+					Buying:  30,
+					Selling: 40,
+				},
+			},
+		},
+	}
 	eurTrustLine = xdr.TrustLineEntry{
 		AccountId: xdr.MustAddress(accountOne),
 		Asset:     euro,
@@ -165,11 +202,10 @@ func TestGetAccountsHandlerPageResultsByAsset(t *testing.T) {
 	q := &history.Q{tt.HorizonSession()}
 	handler := &GetAccountsHandler{HistoryQ: q}
 
-	rows := accountSigners()
-
-	for _, row := range rows {
-		q.CreateAccountSigner(row.Account, row.Signer, row.Weight)
-	}
+	_, err := q.InsertAccount(account1, 1234)
+	tt.Assert.NoError(err)
+	_, err = q.InsertAccount(account2, 1234)
+	tt.Assert.NoError(err)
 
 	var assetType, code, issuer string
 	usd.MustExtract(&assetType, &code, &issuer)
@@ -179,7 +215,15 @@ func TestGetAccountsHandlerPageResultsByAsset(t *testing.T) {
 		"asset_type":   assetType,
 	}
 
-	records, err := handler.GetResourcePage(makeRequest(t, params, map[string]string{}))
+	records, err := handler.GetResourcePage(
+		httptest.NewRecorder(),
+		makeRequest(
+			t,
+			params,
+			map[string]string{},
+			q.Session,
+		),
+	)
 
 	tt.Assert.NoError(err)
 	tt.Assert.Equal(0, len(records))
@@ -189,12 +233,19 @@ func TestGetAccountsHandlerPageResultsByAsset(t *testing.T) {
 	_, err = q.InsertTrustLine(usdTrustLine, 1235)
 	assert.NoError(t, err)
 
-	records, err = handler.GetResourcePage(makeRequest(t, params, map[string]string{}))
+	records, err = handler.GetResourcePage(
+		httptest.NewRecorder(),
+		makeRequest(
+			t,
+			params,
+			map[string]string{},
+			q.Session,
+		),
+	)
 
 	tt.Assert.NoError(err)
 	tt.Assert.Equal(1, len(records))
-
-	result := records[0].(protocol.AccountSigner)
+	result := records[0].(protocol.Account)
 	tt.Assert.Equal(accountTwo, result.AccountID)
 }
 
