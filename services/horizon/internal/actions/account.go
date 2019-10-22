@@ -192,5 +192,20 @@ func loadTrustlines(historyQ *history.Q, accounts []string) (map[string][]histor
 }
 
 func loadSigners(historyQ *history.Q, accounts []string) (map[string][]history.AccountSigner, error) {
-	return make(map[string][]history.AccountSigner), nil
+	signers := make(map[string][]history.AccountSigner)
+
+	records, err := historyQ.SignersForAccounts(accounts)
+	if err != nil {
+		return signers, err
+	}
+
+	for _, record := range records {
+		_, ok := signers[record.Account]
+		if ok {
+			signers[record.Account] = append(signers[record.Account], record)
+		} else {
+			signers[record.Account] = []history.AccountSigner{record}
+		}
+	}
+	return signers, nil
 }
