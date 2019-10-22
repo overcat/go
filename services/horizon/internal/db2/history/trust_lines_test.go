@@ -29,7 +29,7 @@ var (
 	}
 
 	usdTrustLine = xdr.TrustLineEntry{
-		AccountId: xdr.MustAddress("GAOQJGUAB7NI7K7I62ORBXMN3J4SSWQUQ7FOEPSDJ322W2HMCNWPHXFB"),
+		AccountId: xdr.MustAddress("GCYVFGI3SEQJGBNQQG7YCMFWEYOHK3XPVOVPA6C566PXWN4SN7LILZSM"),
 		Asset:     xdr.MustNewCreditAsset("USDUSD", trustLineIssuer.Address()),
 		Balance:   10000,
 		Limit:     123456789,
@@ -169,7 +169,7 @@ func TestGetTrustLinesByAccountsID(t *testing.T) {
 
 	ids := []string{
 		eurTrustLine.AccountId.Address(),
-		usdTrustLine.Asset.String(),
+		usdTrustLine.AccountId.Address(),
 	}
 
 	lines, err := q.GetTrustLinesByAccountsID(ids)
