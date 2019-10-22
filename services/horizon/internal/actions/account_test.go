@@ -92,6 +92,19 @@ var (
 			},
 		},
 	}
+
+	data1 = xdr.DataEntry{
+		AccountId: xdr.MustAddress(accountOne),
+		DataName:  "test data",
+		// This also tests if base64 encoding is working as 0 is invalid UTF-8 byte
+		DataValue: []byte{0, 1, 2, 3, 4, 5, 6, 7, 8, 9},
+	}
+
+	data2 = xdr.DataEntry{
+		AccountId: xdr.MustAddress(accountTwo),
+		DataName:  "test data2",
+		DataValue: []byte{10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+	}
 )
 
 func TestAccountInfo(t *testing.T) {
@@ -207,6 +220,18 @@ func TestGetAccountsHandlerPageResultsByAsset(t *testing.T) {
 	_, err = q.InsertAccount(account2, 1234)
 	tt.Assert.NoError(err)
 
+	rows := accountSigners()
+
+	for _, row := range rows {
+		_, err = q.CreateAccountSigner(row.Account, row.Signer, row.Weight)
+		tt.Assert.NoError(err)
+	}
+
+	_, err = q.InsertAccountData(data1, 1234)
+	assert.NoError(t, err)
+	_, err = q.InsertAccountData(data2, 1234)
+	assert.NoError(t, err)
+
 	var assetType, code, issuer string
 	usd.MustExtract(&assetType, &code, &issuer)
 	params := map[string]string{
@@ -247,6 +272,12 @@ func TestGetAccountsHandlerPageResultsByAsset(t *testing.T) {
 	tt.Assert.Equal(1, len(records))
 	result := records[0].(protocol.Account)
 	tt.Assert.Equal(accountTwo, result.AccountID)
+	tt.Assert.Len(result.Balances, 2)
+	tt.Assert.Len(result.Signers, 2)
+
+	_, ok := result.Data[string(data2.DataName)]
+	tt.Assert.True(ok)
+
 }
 
 func accountSigners() []history.AccountSigner {

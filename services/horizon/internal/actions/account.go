@@ -92,13 +92,44 @@ func (handler GetAccountsHandler) GetResourcePage(
 			return nil, errors.Wrap(err, "loading account records")
 		}
 
+		accountIDS := make([]string, len(records))
+		for _, record := range records {
+			accountIDS = append(accountIDS, record.AccountID)
+		}
+
+		signers, err := loadSigners(accountIDS)
+		if err != nil {
+			return nil, err
+		}
+
+		trustlines, err := loadTrustlines(accountIDS)
+		if err != nil {
+			return nil, err
+		}
+
+		data, err := loadData(accountIDS)
+		if err != nil {
+			return nil, err
+		}
+
 		for _, record := range records {
 			var res protocol.Account
-			data := []history.Data{}
-			signers := []history.AccountSigner{}
-			trustlines := []history.TrustLine{}
+			s, ok := signers[record.AccountID]
+			if !ok {
+				s = []history.AccountSigner{}
+			}
 
-			resourceadapter.PopulateAccountEntry(ctx, &res, record, data, signers, trustlines)
+			t, ok := trustlines[record.AccountID]
+			if !ok {
+				t = []history.TrustLine{}
+			}
+
+			d, ok := data[record.AccountID]
+			if !ok {
+				d = []history.Data{}
+			}
+
+			resourceadapter.PopulateAccountEntry(ctx, &res, record, d, s, t)
 
 			accounts = append(accounts, res)
 		}
@@ -120,4 +151,16 @@ func (handler GetAccountsHandler) GetResourcePage(
 	}
 
 	return accounts, nil
+}
+
+func loadData(accountsID []string) (map[string][]history.Data, error) {
+	return make(map[string][]history.Data), nil
+}
+
+func loadTrustlines(accountsID []string) (map[string][]history.TrustLine, error) {
+	return make(map[string][]history.TrustLine), nil
+}
+
+func loadSigners(accountsID []string) (map[string][]history.AccountSigner, error) {
+	return make(map[string][]history.AccountSigner), nil
 }
