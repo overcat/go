@@ -156,3 +156,22 @@ func TestRemoveTrustLine(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, int64(0), rows)
 }
+func TestGetTrustLinesByAccountsID(t *testing.T) {
+	tt := test.Start(t)
+	defer tt.Finish()
+	test.ResetHorizonDB(t, tt.HorizonDB)
+	q := &Q{tt.HorizonSession()}
+
+	_, err := q.InsertTrustLine(eurTrustLine, 1234)
+	assert.NoError(t, err)
+	_, err = q.InsertTrustLine(usdTrustLine, 1235)
+	assert.NoError(t, err)
+
+	ids := []string{
+		eurTrustLine.AccountId.Address(),
+		usdTrustLine.Asset.String(),
+	}
+
+	lines, err := q.GetTrustLinesByAccountsID(ids)
+	assert.Len(t, lines, 2)
+}
