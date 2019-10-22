@@ -92,6 +92,11 @@ func (handler GetAccountsHandler) GetResourcePage(
 			return nil, errors.Wrap(err, "loading account records")
 		}
 
+		if len(records) == 0 {
+			// early return
+			return accounts, nil
+		}
+
 		accountIDS := make([]string, 0, len(records))
 		for _, record := range records {
 			accountIDS = append(accountIDS, record.AccountID)
