@@ -92,22 +92,22 @@ func (handler GetAccountsHandler) GetResourcePage(
 			return nil, errors.Wrap(err, "loading account records")
 		}
 
-		accountIDS := make([]string, len(records))
+		accountIDS := make([]string, 0, len(records))
 		for _, record := range records {
 			accountIDS = append(accountIDS, record.AccountID)
 		}
 
-		signers, err := loadSigners(accountIDS)
+		signers, err := loadSigners(handler.HistoryQ, accountIDS)
 		if err != nil {
 			return nil, err
 		}
 
-		trustlines, err := loadTrustlines(accountIDS)
+		trustlines, err := loadTrustlines(handler.HistoryQ, accountIDS)
 		if err != nil {
 			return nil, err
 		}
 
-		data, err := loadData(accountIDS)
+		data, err := loadData(handler.HistoryQ, accountIDS)
 		if err != nil {
 			return nil, err
 		}
@@ -153,14 +153,29 @@ func (handler GetAccountsHandler) GetResourcePage(
 	return accounts, nil
 }
 
-func loadData(accountsID []string) (map[string][]history.Data, error) {
-	return make(map[string][]history.Data), nil
+func loadData(historyQ *history.Q, accounts []string) (map[string][]history.Data, error) {
+	data := make(map[string][]history.Data)
+
+	records, err := historyQ.GetAccountDataByAccountsID(accounts)
+	if err != nil {
+		return data, err
+	}
+
+	for _, record := range records {
+		_, ok := data[record.AccountID]
+		if ok {
+			data[record.AccountID] = append(data[record.AccountID], record)
+		} else {
+			data[record.AccountID] = []history.Data{record}
+		}
+	}
+	return data, nil
 }
 
-func loadTrustlines(accountsID []string) (map[string][]history.TrustLine, error) {
+func loadTrustlines(historyQ *history.Q, accounts []string) (map[string][]history.TrustLine, error) {
 	return make(map[string][]history.TrustLine), nil
 }
 
-func loadSigners(accountsID []string) (map[string][]history.AccountSigner, error) {
+func loadSigners(historyQ *history.Q, accounts []string) (map[string][]history.AccountSigner, error) {
 	return make(map[string][]history.AccountSigner), nil
 }
