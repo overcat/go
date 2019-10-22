@@ -173,7 +173,22 @@ func loadData(historyQ *history.Q, accounts []string) (map[string][]history.Data
 }
 
 func loadTrustlines(historyQ *history.Q, accounts []string) (map[string][]history.TrustLine, error) {
-	return make(map[string][]history.TrustLine), nil
+	trustLines := make(map[string][]history.TrustLine)
+
+	records, err := historyQ.GetTrustLinesByAccountsID(accounts)
+	if err != nil {
+		return trustLines, err
+	}
+
+	for _, record := range records {
+		_, ok := trustLines[record.AccountID]
+		if ok {
+			trustLines[record.AccountID] = append(trustLines[record.AccountID], record)
+		} else {
+			trustLines[record.AccountID] = []history.TrustLine{record}
+		}
+	}
+	return trustLines, nil
 }
 
 func loadSigners(historyQ *history.Q, accounts []string) (map[string][]history.AccountSigner, error) {
