@@ -119,9 +119,7 @@ func (q *Q) RemoveAccount(accountID string) (int64, error) {
 }
 
 // AccountSignersForAsset returns a list of `AccountSigner` rows who are trustee to an
-// asset Using this type for now, we should probably change the type on this
-// end-point to be consistent with what the end-point is supposed to be
-// returning.
+// asset
 func (q *Q) AccountsForAsset(asset xdr.Asset, page db2.PageQuery) ([]AccountEntry, error) {
 	var assetType, code, issuer string
 	asset.MustExtract(&assetType, &code, &issuer)
