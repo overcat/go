@@ -118,22 +118,22 @@ func (handler GetAccountsHandler) GetResourcePage(
 			return accounts, nil
 		}
 
-		accountIDS := make([]string, 0, len(records))
+		accountIDs := make([]string, 0, len(records))
 		for _, record := range records {
-			accountIDS = append(accountIDS, record.AccountID)
+			accountIDs = append(accountIDs, record.AccountID)
 		}
 
-		signers, err := loadSigners(handler.HistoryQ, accountIDS)
+		signers, err := loadSigners(handler.HistoryQ, accountIDs)
 		if err != nil {
 			return nil, err
 		}
 
-		trustlines, err := loadTrustlines(handler.HistoryQ, accountIDS)
+		trustlines, err := loadTrustlines(handler.HistoryQ, accountIDs)
 		if err != nil {
 			return nil, err
 		}
 
-		data, err := loadData(handler.HistoryQ, accountIDS)
+		data, err := loadData(handler.HistoryQ, accountIDs)
 		if err != nil {
 			return nil, err
 		}
