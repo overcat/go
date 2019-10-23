@@ -10,6 +10,8 @@ import (
 	"github.com/stellar/go/services/horizon/internal/resourceadapter"
 	"github.com/stellar/go/support/errors"
 	"github.com/stellar/go/support/render/hal"
+	"github.com/stellar/go/support/render/problem"
+	"github.com/stellar/go/xdr"
 )
 
 // AccountInfo returns the information about an account identified by addr.
@@ -56,12 +58,64 @@ func AccountInfo(ctx context.Context, cq *core.Q, addr string) (*protocol.Accoun
 
 // AccountsQuery query struct for accounts end-point
 type AccountsQuery struct {
-	Signer string `schema:"signer" valid:"accountID,optional"`
+	Signer      string `schema:"signer" valid:"accountID,optional"`
+	AssetType   string `schema:"asset_type" valid:"assetType,optional"`
+	AssetIssuer string `schema:"asset_issuer" valid:"accountID,optional"`
+	AssetCode   string `schema:"asset_code" valid:"-"`
+}
+
+var invalidAccountsParams = problem.P{
+	Type:   "invalid_accounts_params",
+	Title:  "Invalid Accounts Parameters",
+	Status: http.StatusBadRequest,
+	Detail: "A filter is required. Please ensure that you are including a signer or an asset (asset_type, asset_issuer and asset_code).",
 }
 
 // Validate runs custom validations.
 func (q AccountsQuery) Validate() error {
+	if len(q.Signer) == 0 && q.Asset() == nil {
+		return invalidAccountsParams
+	}
+
+	err := validateAssetParams(q.AssetType, q.AssetCode, q.AssetIssuer, "")
+	if err != nil {
+		return err
+	}
+
+	if len(q.Signer) > 0 && q.Asset() != nil {
+		return problem.MakeInvalidFieldProblem(
+			"signer",
+			errors.New("you can't filter by signer and asset at the same time"),
+		)
+	}
+
+	if q.Asset() != nil && q.AssetType == "native" {
+		return problem.MakeInvalidFieldProblem(
+			"asset_type",
+			errors.New("you can't filter by asset type: native"),
+		)
+	}
+
 	return nil
+}
+
+// Asset returns an xdr.Asset representing the Asset we want to find the trustees by.
+func (q AccountsQuery) Asset() *xdr.Asset {
+	if len(q.AssetType) == 0 {
+		return nil
+	}
+
+	asset, err := xdr.BuildAsset(
+		q.AssetType,
+		q.AssetIssuer,
+		q.AssetCode,
+	)
+
+	if err != nil {
+		panic(err)
+	}
+
+	return &asset
 }
 
 // GetAccountsHandler is the action handler for the /accounts endpoint
@@ -110,12 +164,7 @@ func (handler GetAccountsHandler) GetResourcePage(
 			accounts = append(accounts, res)
 		}
 	} else {
-		asset, err := GetAsset(r, "")
-		if err != nil {
-			return nil, err
-		}
-
-		records, err := historyQ.AccountsForAsset(asset, pq)
+		records, err := historyQ.AccountsForAsset(*qp.Asset(), pq)
 		if err != nil {
 			return nil, errors.Wrap(err, "loading account records")
 		}

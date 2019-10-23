@@ -10,6 +10,7 @@ import (
 	"github.com/stellar/go/services/horizon/internal/db2/core"
 	"github.com/stellar/go/services/horizon/internal/db2/history"
 	"github.com/stellar/go/services/horizon/internal/test"
+	"github.com/stellar/go/support/render/problem"
 	"github.com/stellar/go/xdr"
 )
 
@@ -277,7 +278,82 @@ func TestGetAccountsHandlerPageResultsByAsset(t *testing.T) {
 
 	_, ok := result.Data[string(data2.DataName)]
 	tt.Assert.True(ok)
+}
 
+func TestGetAccountsHandlerInvalidParams(t *testing.T) {
+	testCases := []struct {
+		desc                    string
+		params                  map[string]string
+		expectedInvalidField    string
+		expectedErr             string
+		isInvalidAccountsParams bool
+	}{
+		{
+			desc:                    "empty filters",
+			isInvalidAccountsParams: true,
+		},
+		{
+			desc: "signer and seller",
+			params: map[string]string{
+				"signer":       accountOne,
+				"asset_issuer": accountOne,
+				"asset_code":   "USD",
+				"asset_type":   "credit_alphanum4",
+			},
+			expectedInvalidField: "signer",
+			expectedErr:          "you can't filter by signer and asset at the same time",
+		},
+		{
+			desc: "filtering by native asset",
+			params: map[string]string{
+				"asset_type": "native",
+			},
+			expectedInvalidField: "asset_type",
+			expectedErr:          "you can't filter by asset type: native",
+		},
+		{
+			desc: "invalid asset",
+			params: map[string]string{
+				"asset_issuer": accountOne,
+				"asset_code":   "USDCOP",
+				"asset_type":   "credit_alphanum4",
+			},
+			expectedInvalidField: "asset_code",
+			expectedErr:          "Asset code must be 1-12 alphanumeric characters",
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.desc, func(t *testing.T) {
+			tt := test.Start(t)
+			defer tt.Finish()
+			q := &history.Q{tt.HorizonSession()}
+			handler := &GetAccountsHandler{HistoryQ: q}
+
+			_, err := handler.GetResourcePage(
+				httptest.NewRecorder(),
+				makeRequest(
+					t,
+					tc.params,
+					map[string]string{},
+					q.Session,
+				),
+			)
+			tt.Assert.Error(err)
+			if tc.isInvalidAccountsParams {
+				tt.Assert.Equal(invalidAccountsParams, err)
+			} else {
+				if tt.Assert.IsType(&problem.P{}, err) {
+					p := err.(*problem.P)
+					tt.Assert.Equal("bad_request", p.Type)
+					tt.Assert.Equal(tc.expectedInvalidField, p.Extras["invalid_field"])
+					tt.Assert.Equal(
+						tc.expectedErr,
+						p.Extras["reason"],
+					)
+				}
+			}
+		})
+	}
 }
 
 func accountSigners() []history.AccountSigner {
