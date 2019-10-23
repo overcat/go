@@ -163,9 +163,9 @@ func TestGetTrustLinesByAccountsID(t *testing.T) {
 	q := &Q{tt.HorizonSession()}
 
 	_, err := q.InsertTrustLine(eurTrustLine, 1234)
-	assert.NoError(t, err)
+	tt.Assert.NoError(err)
 	_, err = q.InsertTrustLine(usdTrustLine, 1235)
-	assert.NoError(t, err)
+	tt.Assert.NoError(err)
 
 	ids := []string{
 		eurTrustLine.AccountId.Address(),
@@ -173,5 +173,6 @@ func TestGetTrustLinesByAccountsID(t *testing.T) {
 	}
 
 	lines, err := q.GetTrustLinesByAccountsID(ids)
-	assert.Len(t, lines, 2)
+	tt.Assert.NoError(err)
+	tt.Assert.Len(lines, 2)
 }
