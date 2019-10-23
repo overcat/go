@@ -120,7 +120,6 @@ func (q AccountsQuery) Asset() *xdr.Asset {
 
 // GetAccountsHandler is the action handler for the /accounts endpoint
 type GetAccountsHandler struct {
-	HistoryQ *history.Q
 }
 
 // GetResourcePage returns a page containing the account records that have
@@ -179,17 +178,17 @@ func (handler GetAccountsHandler) GetResourcePage(
 			accountIDs = append(accountIDs, record.AccountID)
 		}
 
-		signers, err := handler.loadSigners(handler.HistoryQ, accountIDs)
+		signers, err := handler.loadSigners(historyQ, accountIDs)
 		if err != nil {
 			return nil, err
 		}
 
-		trustlines, err := handler.loadTrustlines(handler.HistoryQ, accountIDs)
+		trustlines, err := handler.loadTrustlines(historyQ, accountIDs)
 		if err != nil {
 			return nil, err
 		}
 
-		data, err := handler.loadData(handler.HistoryQ, accountIDs)
+		data, err := handler.loadData(historyQ, accountIDs)
 		if err != nil {
 			return nil, err
 		}

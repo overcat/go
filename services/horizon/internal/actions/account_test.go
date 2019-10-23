@@ -132,7 +132,7 @@ func TestGetAccountsHandlerPageNoResults(t *testing.T) {
 	test.ResetHorizonDB(t, tt.HorizonDB)
 
 	q := &history.Q{tt.HorizonSession()}
-	handler := &GetAccountsHandler{HistoryQ: q}
+	handler := &GetAccountsHandler{}
 	records, err := handler.GetResourcePage(
 		httptest.NewRecorder(),
 		makeRequest(
@@ -154,7 +154,7 @@ func TestGetAccountsHandlerPageResultsBySigner(t *testing.T) {
 	test.ResetHorizonDB(t, tt.HorizonDB)
 
 	q := &history.Q{tt.HorizonSession()}
-	handler := &GetAccountsHandler{HistoryQ: q}
+	handler := &GetAccountsHandler{}
 
 	rows := accountSigners()
 
@@ -214,7 +214,7 @@ func TestGetAccountsHandlerPageResultsByAsset(t *testing.T) {
 	test.ResetHorizonDB(t, tt.HorizonDB)
 
 	q := &history.Q{tt.HorizonSession()}
-	handler := &GetAccountsHandler{HistoryQ: q}
+	handler := &GetAccountsHandler{}
 
 	_, err := q.InsertAccount(account1, 1234)
 	tt.Assert.NoError(err)
@@ -327,7 +327,7 @@ func TestGetAccountsHandlerInvalidParams(t *testing.T) {
 			tt := test.Start(t)
 			defer tt.Finish()
 			q := &history.Q{tt.HorizonSession()}
-			handler := &GetAccountsHandler{HistoryQ: q}
+			handler := &GetAccountsHandler{}
 
 			_, err := handler.GetResourcePage(
 				httptest.NewRecorder(),
