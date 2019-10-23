@@ -123,11 +123,7 @@ type GetAccountsHandler struct {
 }
 
 // GetResourcePage returns a page containing the account records that have
-// `signer` as a signer. This doesn't return full account details resource
-// because of the limitations of existing ingestion architecture. In a future,
-// when the new ingestion system is fully integrated, this endpoint can be used
-// to find accounts for signer but also accounts for assets, home domain,
-// inflation_dest etc.
+// `signer` as a signer or have a trustline to the given asset.
 func (handler GetAccountsHandler) GetResourcePage(
 	w HeaderWriter,
 	r *http.Request,
@@ -195,20 +191,9 @@ func (handler GetAccountsHandler) GetResourcePage(
 
 		for _, record := range records {
 			var res protocol.Account
-			s, ok := signers[record.AccountID]
-			if !ok {
-				s = []history.AccountSigner{}
-			}
-
-			t, ok := trustlines[record.AccountID]
-			if !ok {
-				t = []history.TrustLine{}
-			}
-
-			d, ok := data[record.AccountID]
-			if !ok {
-				d = []history.Data{}
-			}
+			s := signers[record.AccountID]
+			t := trustlines[record.AccountID]
+			d := data[record.AccountID]
 
 			resourceadapter.PopulateAccountEntry(ctx, &res, record, d, s, t)
 
