@@ -54,6 +54,16 @@ func AccountInfo(ctx context.Context, cq *core.Q, addr string) (*protocol.Accoun
 	return &resource, errors.Wrap(err, "populating account")
 }
 
+// AccountsQuery query struct for accounts end-point
+type AccountsQuery struct {
+	Signer string `schema:"signer" valid:"accountID,optional"`
+}
+
+// Validate runs custom validations.
+func (q AccountsQuery) Validate() error {
+	return nil
+}
+
 // GetAccountsHandler is the action handler for the /accounts endpoint
 type GetAccountsHandler struct {
 	HistoryQ *history.Q
@@ -75,10 +85,6 @@ func (handler GetAccountsHandler) GetResourcePage(
 		return nil, err
 	}
 
-	rawSigner, err := GetString(r, "signer")
-	if err != nil {
-		return nil, err
-	}
 	var accounts []hal.Pageable
 
 	historyQ, err := historyQFromRequest(r)
@@ -86,13 +92,14 @@ func (handler GetAccountsHandler) GetResourcePage(
 		return nil, err
 	}
 
-	if len(rawSigner) > 0 {
+	qp := AccountsQuery{}
+	err = GetParams(&qp, r)
+	if err != nil {
+		return nil, err
+	}
 
-		signer, err := GetAccountID(r, "signer")
-		if err != nil {
-			return nil, err
-		}
-		records, err := historyQ.AccountsForSigner(signer.Address(), pq)
+	if len(qp.Signer) > 0 {
+		records, err := historyQ.AccountsForSigner(qp.Signer, pq)
 		if err != nil {
 			return nil, errors.Wrap(err, "loading account records")
 		}
@@ -169,7 +176,7 @@ func (handler GetAccountsHandler) loadData(historyQ *history.Q, accounts []strin
 
 	records, err := historyQ.GetAccountDataByAccountsID(accounts)
 	if err != nil {
-		return data, errors.Wrap(err, "loading account data records by accounts")
+		return data, errors.Wrap(err, "loading account data records by accounts id")
 	}
 
 	for _, record := range records {
