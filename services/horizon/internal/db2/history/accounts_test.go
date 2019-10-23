@@ -206,4 +206,9 @@ func TestAccountsForAsset(t *testing.T) {
 	assert.NoError(t, err)
 	tt.Assert.Len(accounts, 1)
 	tt.Assert.Equal(account2.AccountId.Address(), accounts[0].AccountID)
+
+	pq.Cursor = account2.AccountId.Address()
+	accounts, err = q.AccountsForAsset(usdTrustLine.Asset, pq)
+	assert.NoError(t, err)
+	tt.Assert.Len(accounts, 0)
 }
