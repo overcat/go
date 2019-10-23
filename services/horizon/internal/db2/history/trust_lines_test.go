@@ -44,6 +44,23 @@ var (
 			},
 		},
 	}
+
+	usdTrustLine2 = xdr.TrustLineEntry{
+		AccountId: xdr.MustAddress("GBYSBDAJZMHL5AMD7QXQ3JEP3Q4GLKADWIJURAAHQALNAWD6Z5XF2RAC"),
+		Asset:     xdr.MustNewCreditAsset("USDUSD", trustLineIssuer.Address()),
+		Balance:   10000,
+		Limit:     123456789,
+		Flags:     0,
+		Ext: xdr.TrustLineEntryExt{
+			V: 1,
+			V1: &xdr.TrustLineEntryV1{
+				Liabilities: xdr.Liabilities{
+					Buying:  1,
+					Selling: 2,
+				},
+			},
+		},
+	}
 )
 
 func TestIsAuthorized(t *testing.T) {
@@ -166,13 +183,31 @@ func TestGetTrustLinesByAccountsID(t *testing.T) {
 	tt.Assert.NoError(err)
 	_, err = q.InsertTrustLine(usdTrustLine, 1235)
 	tt.Assert.NoError(err)
+	_, err = q.InsertTrustLine(usdTrustLine2, 1235)
+	tt.Assert.NoError(err)
 
 	ids := []string{
 		eurTrustLine.AccountId.Address(),
 		usdTrustLine.AccountId.Address(),
 	}
 
-	lines, err := q.GetTrustLinesByAccountsID(ids)
+	records, err := q.GetTrustLinesByAccountsID(ids)
 	tt.Assert.NoError(err)
-	tt.Assert.Len(lines, 2)
+	tt.Assert.Len(records, 2)
+
+	m := map[string]xdr.TrustLineEntry{
+		eurTrustLine.AccountId.Address(): eurTrustLine,
+		usdTrustLine.AccountId.Address(): usdTrustLine,
+	}
+
+	for _, record := range records {
+		xtl, ok := m[record.AccountID]
+		tt.Assert.True(ok)
+		asset := xdr.MustNewCreditAsset(record.AssetCode, record.AssetIssuer)
+		tt.Assert.Equal(xtl.Asset, asset)
+		tt.Assert.Equal(xtl.AccountId.Address(), record.AccountID)
+		delete(m, record.AccountID)
+	}
+
+	tt.Assert.Len(m, 0)
 }
