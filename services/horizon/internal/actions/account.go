@@ -169,7 +169,7 @@ func (handler GetAccountsHandler) loadData(historyQ *history.Q, accounts []strin
 
 	records, err := historyQ.GetAccountDataByAccountsID(accounts)
 	if err != nil {
-		return data, err
+		return data, errors.Wrap(err, "loading account data records by accounts")
 	}
 
 	for _, record := range records {
@@ -184,7 +184,7 @@ func (handler GetAccountsHandler) loadTrustlines(historyQ *history.Q, accounts [
 
 	records, err := historyQ.GetTrustLinesByAccountsID(accounts)
 	if err != nil {
-		return trustLines, err
+		return trustLines, errors.Wrap(err, "loading trustline records by accounts")
 	}
 
 	for _, record := range records {
@@ -199,7 +199,7 @@ func (handler GetAccountsHandler) loadSigners(historyQ *history.Q, accounts []st
 
 	records, err := historyQ.SignersForAccounts(accounts)
 	if err != nil {
-		return signers, err
+		return signers, errors.Wrap(err, "loading account signers by account")
 	}
 
 	for _, record := range records {
