@@ -81,12 +81,18 @@ func (handler GetAccountsHandler) GetResourcePage(
 	}
 	var accounts []hal.Pageable
 
+	historyQ, err := historyQFromRequest(r)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(rawSigner) > 0 {
+
 		signer, err := GetAccountID(r, "signer")
 		if err != nil {
 			return nil, err
 		}
-		records, err := handler.HistoryQ.AccountsForSigner(signer.Address(), pq)
+		records, err := historyQ.AccountsForSigner(signer.Address(), pq)
 		if err != nil {
 			return nil, errors.Wrap(err, "loading account records")
 		}
@@ -102,7 +108,7 @@ func (handler GetAccountsHandler) GetResourcePage(
 			return nil, err
 		}
 
-		records, err := handler.HistoryQ.AccountsForAsset(asset, pq)
+		records, err := historyQ.AccountsForAsset(asset, pq)
 		if err != nil {
 			return nil, errors.Wrap(err, "loading account records")
 		}
