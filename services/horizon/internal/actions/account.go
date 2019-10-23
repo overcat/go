@@ -173,13 +173,9 @@ func (handler GetAccountsHandler) loadData(historyQ *history.Q, accounts []strin
 	}
 
 	for _, record := range records {
-		_, ok := data[record.AccountID]
-		if ok {
-			data[record.AccountID] = append(data[record.AccountID], record)
-		} else {
-			data[record.AccountID] = []history.Data{record}
-		}
+		data[record.AccountID] = append(data[record.AccountID], record)
 	}
+
 	return data, nil
 }
 
@@ -192,13 +188,9 @@ func (handler GetAccountsHandler) loadTrustlines(historyQ *history.Q, accounts [
 	}
 
 	for _, record := range records {
-		_, ok := trustLines[record.AccountID]
-		if ok {
-			trustLines[record.AccountID] = append(trustLines[record.AccountID], record)
-		} else {
-			trustLines[record.AccountID] = []history.TrustLine{record}
-		}
+		trustLines[record.AccountID] = append(trustLines[record.AccountID], record)
 	}
+
 	return trustLines, nil
 }
 
@@ -211,12 +203,8 @@ func (handler GetAccountsHandler) loadSigners(historyQ *history.Q, accounts []st
 	}
 
 	for _, record := range records {
-		_, ok := signers[record.Account]
-		if ok {
-			signers[record.Account] = append(signers[record.Account], record)
-		} else {
-			signers[record.Account] = []history.AccountSigner{record}
-		}
+		signers[record.Account] = append(signers[record.Account], record)
 	}
+
 	return signers, nil
 }
