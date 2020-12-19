@@ -144,7 +144,12 @@ func main() {
 				panic(err)
 			}
 		}()
-		fmt.Fprintln(os.Stdout, "Server listening at https://localhost"+addr)
+
+		serverUrlScheme := "http"
+		if *tlsCert != "" {
+			serverUrlScheme = "https"
+		}
+		fmt.Fprintf(os.Stdout, "Server listening at %s://localhost%s\n", serverUrlScheme, addr)
 
 		// block forever without using any resources so this process won't quit while
 		// the goroutine containing ListenAndServe is still working
